@@ -7,8 +7,9 @@
   "author": "Guru107 <guruak107@gmail.com>",
   "license": "MIT",
   "private": false,
+  "preferGlobal": true,
   "bin": {
-    "servermap":"./index.js"
+    "servermap":"./servermap.js"
   },
   "dependencies": {
     "chalk": "2.4.1",
