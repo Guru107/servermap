@@ -3,16 +3,47 @@ const clear = require('clear')
 const chalk = require('chalk')
 const fs = require('fs')
 const ini = require('ini')
+const Fuse = require('fuse.js')
 const pkg = require('../package.json')
-const { initialize,createConfig } = require('./utils')
+const { initialize,createConfig,ansibleInventoryHostParser,iniFileReader } = require('./utils')
 
 const configObj = createConfig(pkg.name,{})
+const servers = [
+	{
+		'group':'dbservers',
+		'servers':[
+			'one.example.com',
+			'two.example.com',
+			'three.example.com'
+		]
+	},
+	{
+		'group': 'webservers',
+		'servers':[
+			'foo.example.com',
+			'bar.example.com'
+		]
+	}
+]
+const fuseOptions = {
+	keys:['group','servers']
+}
+const fuse = new Fuse(servers,fuseOptions)
+
+console.log(fuse.search('web'))
+if(configObj.has('ansible')){
+	if(fs.existsSync(configObj.get('ansible'))){
+		const inventoryObject = iniFileReader(configObj.get('ansible'))
+		console.log(inventoryObject)
+		const inventories = ansibleInventoryHostParser(inventoryObject)
+	}else{
+		console.warn('Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file')
+		configObj.delete('ansible')
+	}
+}
 
 program.version(pkg.version)
 .description(chalk.yellow('Server Map'))
-
-
-
 
 program.command('init')
 .description('Initialize your config')
@@ -20,8 +51,6 @@ program.command('init')
 .action(function(){
 	initialize().then(config => {
 		configObj.set(config)
-		const inventoryFile = ini.parse(fs.readFileSync(configObj.get('ansible'),'UTF-8'))
-		console.log(inventoryFile)
 	})
 })
 
@@ -30,8 +59,11 @@ program.command('connect <server_name>')
 .description('Ssh into remote server')
 .alias('c')
 .action(function(arg1){
-	console.log(arg1)
+	
 })
 
-program.parse(process.argv)
+
+
+program
+.parse(process.argv)
 
