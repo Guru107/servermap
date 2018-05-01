@@ -53,10 +53,22 @@ function ansibleInventoryHostParser(inventoryObject){
 			ansibleInventoryHostParser(inventoryObject[inventorykey])
 		}else if(typeof inventoryObject[inventorykey] === 'boolean'){
 			console.log('Inventory name: ',inventorykey)
-		}else{
+		}else {
 			return
 		}
 	})
+}
+
+function checkAnsibleFile(){
+	if(configObj.has('ansible')){
+		if(fs.existsSync(configObj.get('ansible'))){
+			const inventoryObject = iniFileReader(configObj.get('ansible'))
+			const inventories = ansibleInventoryHostParser(inventoryObject)
+		}else{
+			console.warn('Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file')
+			configObj.delete('ansible')
+		}
+	}
 }
 
 module.exports = {

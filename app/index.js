@@ -1,69 +1,45 @@
+
 const program = require('commander')
 const clear = require('clear')
 const chalk = require('chalk')
 const fs = require('fs')
 const ini = require('ini')
+const omelette = require('omelette')
 const Fuse = require('fuse.js')
 const pkg = require('../package.json')
-const { initialize,createConfig,ansibleInventoryHostParser,iniFileReader } = require('./utils')
+const { initialize, createConfig, ansibleInventoryHostParser, iniFileReader } = require('./utils')
 
 const configObj = createConfig(pkg.name,{})
-const servers = [
-	{
-		'group':'dbservers',
-		'servers':[
-			'one.example.com',
-			'two.example.com',
-			'three.example.com'
-		]
-	},
-	{
-		'group': 'webservers',
-		'servers':[
-			'foo.example.com',
-			'bar.example.com'
-		]
-	}
-]
-const fuseOptions = {
-	keys:['group','servers']
-}
-const fuse = new Fuse(servers,fuseOptions)
+const completion = omelette(`servermap`)
 
-console.log(fuse.search('web'))
-if(configObj.has('ansible')){
-	if(fs.existsSync(configObj.get('ansible'))){
-		const inventoryObject = iniFileReader(configObj.get('ansible'))
-		console.log(inventoryObject)
-		const inventories = ansibleInventoryHostParser(inventoryObject)
-	}else{
-		console.warn('Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file')
-		configObj.delete('ansible')
-	}
-}
+completion.on('action',({reply})=>{
+	reply(['init','connect'])
+})
+completion.init()
+
+
 
 program.version(pkg.version)
 .description(chalk.yellow('Server Map'))
 
+program.option('--setup','Setup auto completion (Run this once)',()=>{
+	completion.setupShellInitFile()
+})
+
 program.command('init')
-.description('Initialize your config')
+.description('Initialize config')
 .alias('i')
-.action(function(){
-	initialize().then(config => {
+.action(serverName => {
+	initialize().then(config=>{
 		configObj.set(config)
 	})
 })
 
-
 program.command('connect <server_name>')
-.description('Ssh into remote server')
+.description('Shh into server')
 .alias('c')
-.action(function(arg1){
-	
+.action(serverName => {
+	console.log(serverName)
 })
 
-
-
-program
-.parse(process.argv)
-
+program.parse(process.argv)
