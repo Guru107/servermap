@@ -38,7 +38,6 @@ program.command('init')
 	.action(serverName => {
 		initialize().then(config => {
 			configObj.set(config)
-			console.log(configObj.get('ansible'))
 		})
 	})
 
@@ -93,6 +92,7 @@ program.command('connect <server_name>')
 
 	})
 
+// Output help information if nothing is provided
 if (!process.argv.slice(2).length) {
 	program.help()
 }
