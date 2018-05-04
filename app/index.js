@@ -28,7 +28,7 @@ omelette(`servermap`).tree({
 program.version(pkg.version)
 	.description(chalk.yellow('Server Map'))
 
-program.option('--setup', 'Setup auto completion (Run this once)', () => {
+program.option('--setup', 'Setup auto completion (Run this only once)', () => {
 	completion.setupShellInitFile()
 })
 
@@ -93,4 +93,7 @@ program.command('connect <server_name>')
 
 	})
 
+if (!process.argv.slice(2).length) {
+	program.help()
+}
 program.parse(process.argv)
