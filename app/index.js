@@ -1,69 +1,103 @@
+
 const program = require('commander')
 const clear = require('clear')
 const chalk = require('chalk')
+const { spawn } = require('child_process')
 const fs = require('fs')
+const os = require('os')
+const SSHClient = require('ssh2')
+
 const ini = require('ini')
+const omelette = require('omelette')
 const Fuse = require('fuse.js')
+
 const pkg = require('../package.json')
-const { initialize,createConfig,ansibleInventoryHostParser,iniFileReader } = require('./utils')
+const { parseInventories ,INVENTORIES_DIR, initialize, createConfig, ansibleInventoryHostParser, iniFileReader, createInventoryDirectory } = require('./utils')
 
-const configObj = createConfig(pkg.name,{})
-const servers = [
-	{
-		'group':'dbservers',
-		'servers':[
-			'one.example.com',
-			'two.example.com',
-			'three.example.com'
-		]
-	},
-	{
-		'group': 'webservers',
-		'servers':[
-			'foo.example.com',
-			'bar.example.com'
-		]
-	}
-]
-const fuseOptions = {
-	keys:['group','servers']
-}
-const fuse = new Fuse(servers,fuseOptions)
+const configObj = createConfig(pkg.name, {})
 
-console.log(fuse.search('web'))
-if(configObj.has('ansible')){
-	if(fs.existsSync(configObj.get('ansible'))){
-		const inventoryObject = iniFileReader(configObj.get('ansible'))
-		console.log(inventoryObject)
-		const inventories = ansibleInventoryHostParser(inventoryObject)
-	}else{
-		console.warn('Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file')
-		configObj.delete('ansible')
-	}
-}
+
+const completion = omelette(`servermap`).tree({
+	init: null,
+	connect: parseInventories(INVENTORIES_DIR)
+})
+
+completion.init()
 
 program.version(pkg.version)
-.description(chalk.yellow('Server Map'))
+	.description(chalk.yellow('Server Map'))
+
+program.option('--setup', 'Setup auto completion (Run this only once)', () => {
+	completion.setupShellInitFile()
+})
 
 program.command('init')
-.description('Initialize your config')
-.alias('i')
-.action(function(){
-	initialize().then(config => {
-		configObj.set(config)
+	.description('Initialize config')
+	.alias('i')
+	.action(serverName => {
+		initialize().then(config => {
+			configObj.set(config)
+			createInventoryDirectory()
+			
+			//const inifile = ansibleInventoryHostParser(iniFileReader(INVENTORIES_DIR))
+			console.log(inifile)
+		})
 	})
-})
 
+program.command('connect <data_center> <group_name> <server_name>')
+	.description('Shh into server')
+	.alias('c')
+	.action((dataCenter, groupName, serverName) => {
+		
+		const sshUser = configObj.get('ssh')
+		console.log(`${sshUser}@${serverName}`)
 
-program.command('connect <server_name>')
-.description('Ssh into remote server')
-.alias('c')
-.action(function(arg1){
-	
-})
+		var conn = new SSHClient();
+		conn.on('ready', function () {
+			
+			conn.shell(function (err, stream) {
+				if (err) throw err;
 
+				process.stdin.setRawMode(true)
+				process.stdin.pipe(stream)
+				stream.pipe(process.stdout)
+				stream.stderr.pipe(process.stderr)
+				process.stdout.on('resize', function () {
+					stream.setWindow(process.stdout.rows, process.stdout.columns);
+				})
+				var listeners = process.stdin.listeners('keypress')
 
+				// Remove those listeners
+				process.stdin.removeAllListeners('keypress')
 
-program
-.parse(process.argv)
+				stream.on('close', function () {
 
+					// Release stdin
+					process.stdin.setRawMode(false)
+					process.stdin.unpipe(stream);
+					process.stdin.unref();
+
+					// Restore listeners
+					listeners.forEach(function (listener) {
+						return process.stdin.addListener('keypress', listener);
+					})
+					// End connection
+					conn.end();
+
+				})
+
+			})
+		}).connect({
+			host: serverName,
+			port: 22,
+			username: sshUser,
+			privateKey: fs.readFileSync(`${os.homedir()}/.ssh/id_rsa`)
+		})
+
+	})
+
+// Output help information if nothing is provided
+if (!process.argv.slice(2).length) {
+	program.help()
+}
+program.parse(process.argv)
