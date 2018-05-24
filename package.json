@@ -1,5 +1,5 @@
 {
-  "name": "server-map",
+  "name": "servermap",
   "version": "1.0.0",
   "description": "A simple tool to ssh into servers based on your ansible inventory file",
   "main": "index.js",
@@ -21,6 +21,8 @@
     "fuse.js": "3.2.0",
     "ini": "1.3.5",
     "inquirer": "5.2.0",
-    "omelette": "0.4.11"
+    "omelette": "0.4.11",
+    "ssh2": "0.6.0",
+    "ssh2-client": "1.2.1"
   }
 }
