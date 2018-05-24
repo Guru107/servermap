@@ -12,18 +12,17 @@ const omelette = require('omelette')
 const Fuse = require('fuse.js')
 
 const pkg = require('../package.json')
-const { initialize, createConfig, ansibleInventoryHostParser, iniFileReader } = require('./utils')
+const { parseInventories ,INVENTORIES_DIR, initialize, createConfig, ansibleInventoryHostParser, iniFileReader, createInventoryDirectory } = require('./utils')
 
 const configObj = createConfig(pkg.name, {})
 
 
-omelette(`servermap`).tree({
+const completion = omelette(`servermap`).tree({
 	init: null,
-	connect: null
-}).init()
+	connect: parseInventories(INVENTORIES_DIR)
+})
 
-
-
+completion.init()
 
 program.version(pkg.version)
 	.description(chalk.yellow('Server Map'))
@@ -38,19 +37,24 @@ program.command('init')
 	.action(serverName => {
 		initialize().then(config => {
 			configObj.set(config)
+			createInventoryDirectory()
+			
+			//const inifile = ansibleInventoryHostParser(iniFileReader(INVENTORIES_DIR))
+			console.log(inifile)
 		})
 	})
 
-program.command('connect <server_name>')
+program.command('connect <data_center> <group_name> <server_name>')
 	.description('Shh into server')
 	.alias('c')
-	.action(serverName => {
+	.action((dataCenter, groupName, serverName) => {
+		
 		const sshUser = configObj.get('ssh')
 		console.log(`${sshUser}@${serverName}`)
 
 		var conn = new SSHClient();
 		conn.on('ready', function () {
-			console.log('Client :: ready');
+			
 			conn.shell(function (err, stream) {
 				if (err) throw err;
 
@@ -69,7 +73,7 @@ program.command('connect <server_name>')
 				stream.on('close', function () {
 
 					// Release stdin
-					process.stdin.setRawMode(false);
+					process.stdin.setRawMode(false)
 					process.stdin.unpipe(stream);
 					process.stdin.unref();
 
