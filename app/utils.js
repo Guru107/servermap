@@ -1,5 +1,6 @@
-const fs = require('fs')
+
 const os = require('os')
+const fs = require('fs')
 const ini = require('ini')
 const chalk = require('chalk')
 const figlet = require('figlet')
@@ -8,6 +9,7 @@ const ConfigStore = require('configstore')
 
 const INVENTORIES_DIR = `${os.homedir()}/inventories`
 function printTitle(message) {
+	/* eslint no-console: 0 */
 	console.log(
 		chalk.yellow(
 			figlet.textSync(message,{font: 'Ghost',
@@ -33,7 +35,7 @@ function createInventoryDirectory() {
 	}
 }
 
-function questions(){
+function questions() {
 	const questions = [
 		{
 			'type':'input',
@@ -72,12 +74,9 @@ function ansibleInventoryHostParser(inventoryObject){
 	})
 }
 
-function checkAnsibleFile(){
+function checkAnsibleFile(configObj){
 	if(configObj.has('ansible')){
-		if(fs.existsSync(configObj.get('ansible'))){
-			const inventoryObject = iniFileReader(configObj.get('ansible'))
-			const inventories = ansibleInventoryHostParser(inventoryObject)
-		}else{
+		if(!fs.existsSync(configObj.get('ansible'))){
 			console.warn('Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file')
 			configObj.delete('ansible')
 		}

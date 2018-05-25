@@ -8,6 +8,10 @@
   "license": "MIT",
   "private": false,
   "preferGlobal": true,
+  "scripts": {
+    "lint": "eslint --fix servermap.js app/*.js",
+    "help": "eslint --help"
+  },
   "bin": {
     "servermap": "./servermap.js"
   },
@@ -24,5 +28,9 @@
     "omelette": "0.4.11",
     "ssh2": "0.6.0",
     "ssh2-client": "1.2.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "8.2.3",
+    "eslint": "4.19.1"
   }
 }

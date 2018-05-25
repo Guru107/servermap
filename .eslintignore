@@ -1,0 +1,7 @@
+*.md
+*.json
+*.lock
+*.txt
+.vscode/**
+node_modules
+LICENSE

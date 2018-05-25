@@ -1,18 +1,16 @@
 
-const program = require('commander')
-const clear = require('clear')
-const chalk = require('chalk')
-const { spawn } = require('child_process')
-const fs = require('fs')
 const os = require('os')
+const fs = require('fs')
+const program = require('commander')
+const chalk = require('chalk')
 const SSHClient = require('ssh2')
 
-const ini = require('ini')
+
 const omelette = require('omelette')
-const Fuse = require('fuse.js')
+
 
 const pkg = require('../package.json')
-const { parseInventories ,INVENTORIES_DIR, initialize, createConfig, ansibleInventoryHostParser, iniFileReader, createInventoryDirectory } = require('./utils')
+const { parseInventories ,INVENTORIES_DIR, initialize, createConfig, createInventoryDirectory } = require('./utils')
 
 const configObj = createConfig(pkg.name, {})
 
@@ -34,13 +32,13 @@ program.option('--setup', 'Setup auto completion (Run this only once)', () => {
 program.command('init')
 	.description('Initialize config')
 	.alias('i')
-	.action(serverName => {
+	.action(() => {
 		initialize().then(config => {
 			configObj.set(config)
 			createInventoryDirectory()
 			
 			//const inifile = ansibleInventoryHostParser(iniFileReader(INVENTORIES_DIR))
-			console.log(inifile)
+			
 		})
 	})
 
@@ -50,6 +48,7 @@ program.command('connect <data_center> <group_name> <server_name>')
 	.action((dataCenter, groupName, serverName) => {
 		
 		const sshUser = configObj.get('ssh')
+		/*eslint no-console: 0 */
 		console.log(`${sshUser}@${serverName}`)
 
 		var conn = new SSHClient();
