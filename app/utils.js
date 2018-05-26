@@ -1,4 +1,3 @@
-
 const os = require('os')
 const fs = require('fs')
 const ini = require('ini')
@@ -12,25 +11,27 @@ function printTitle(message) {
 	/* eslint no-console: 0 */
 	console.log(
 		chalk.yellow(
-			figlet.textSync(message,{font: 'Ghost',
-			horizontalLayout: 'full',
-			verticalLayout: 'default'})
+			figlet.textSync(message, {
+				font: 'Ghost',
+				horizontalLayout: 'full',
+				verticalLayout: 'default'
+			})
 		)
 	)
 }
 
 function checkIfInventoryDirExists() {
-	const inventoryStat = fs.existsSync(INVENTORIES_DIR) && fs.statSync(INVENTORIES_DIR)
-	if(inventoryStat){
+	const inventoryStat =
+		fs.existsSync(INVENTORIES_DIR) && fs.statSync(INVENTORIES_DIR)
+	if (inventoryStat) {
 		return inventoryStat.isDirectory()
-	}else{
+	} else {
 		return false
 	}
 }
 
 function createInventoryDirectory() {
-	
-	if(!checkIfInventoryDirExists()){
+	if (!checkIfInventoryDirExists()) {
 		fs.mkdirSync(INVENTORIES_DIR)
 	}
 }
@@ -38,9 +39,9 @@ function createInventoryDirectory() {
 function questions() {
 	const questions = [
 		{
-			'type':'input',
-			'name':'ssh',
-			'message':'Enter your ssh username: '
+			type: 'input',
+			name: 'ssh',
+			message: 'Enter your ssh username: '
 		}
 	]
 	return inquirer.prompt(questions)
@@ -48,36 +49,37 @@ function questions() {
 
 async function initialize() {
 	printTitle('Server Map')
-	return await questions() 
+	return await questions()
 }
 
-function createConfig(pkgName,config) {
-	return new ConfigStore(pkgName,config)
+function createConfig(pkgName, config) {
+	return new ConfigStore(pkgName, config)
 }
 
-function iniFileReader(filePath){
-	const inventoryFile = ini.parse(fs.readFileSync(filePath,'UTF-8'))
+function iniFileReader(filePath) {
+	const inventoryFile = ini.parse(fs.readFileSync(filePath, 'UTF-8'))
 	return inventoryFile
 }
 
-function ansibleInventoryHostParser(inventoryObject){
-	
+function ansibleInventoryHostParser(inventoryObject) {
 	Object.keys(inventoryObject).forEach(inventorykey => {
-		if(typeof inventoryObject[inventorykey] === 'object'){
-			console.log('Group Name: ',inventorykey)
+		if (typeof inventoryObject[inventorykey] === 'object') {
+			console.log('Group Name: ', inventorykey)
 			ansibleInventoryHostParser(inventoryObject[inventorykey])
-		}else if(typeof inventoryObject[inventorykey] === 'boolean'){
-			console.log('Inventory name: ',inventorykey)
-		}else {
+		} else if (typeof inventoryObject[inventorykey] === 'boolean') {
+			console.log('Inventory name: ', inventorykey)
+		} else {
 			return
 		}
 	})
 }
 
-function checkAnsibleFile(configObj){
-	if(configObj.has('ansible')){
-		if(!fs.existsSync(configObj.get('ansible'))){
-			console.warn('Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file')
+function checkAnsibleFile(configObj) {
+	if (configObj.has('ansible')) {
+		if (!fs.existsSync(configObj.get('ansible'))) {
+			console.warn(
+				'Ansible inventory file does not exist or the path specified is wrong, please run `servermap init` command again to add correct inventory file'
+			)
 			configObj.delete('ansible')
 		}
 	}
@@ -86,32 +88,41 @@ function checkAnsibleFile(configObj){
 function parseInventories(inventoryDirectory) {
 	const inventories = fs.readdirSync(inventoryDirectory)
 
-	const inventoryObject =inventories.map(filename => {
-		const keyName = filename.split('.')[0]
-		const hostGroups = JSON.parse(JSON.stringify(iniFileReader(`${inventoryDirectory}/${filename}`)))
-		
-		const groupInventories = Object.keys(hostGroups).map(groupname => {
-			if(typeof hostGroups[groupname] === 'object'){
-				return { [groupname]: Object.keys(hostGroups[groupname]) }
-			} else {
-				return { [groupname]: hostGroups[groupname] }
-			} 
-		}).reduce((previousValue,currentValue) => {
-			return Object.assign({},previousValue,{
+	const inventoryObject = inventories
+		.map(filename => {
+			const keyName = filename.split('.')[0]
+			const hostGroups = JSON.parse(
+				JSON.stringify(
+					iniFileReader(`${inventoryDirectory}/${filename}`)
+				)
+			)
+
+			const groupInventories = Object.keys(hostGroups)
+				.map(groupname => {
+					if (typeof hostGroups[groupname] === 'object') {
+						return {
+							[groupname]: Object.keys(hostGroups[groupname])
+						}
+					} else {
+						return { [groupname]: hostGroups[groupname] }
+					}
+				})
+				.reduce((previousValue, currentValue) => {
+					return Object.assign({}, previousValue, {
+						...currentValue
+					})
+				}, {})
+
+			return {
+				[keyName]: groupInventories
+			}
+		})
+		.reduce((previousValue, currentValue) => {
+			return Object.assign({}, previousValue, {
 				...currentValue
 			})
-		},{})
-		
-		return {
-			[keyName]: groupInventories
-		}
-	}).reduce((previousValue,currentValue)=>{
-		return Object.assign({},previousValue,{
-			...currentValue
-		})
-	},{})
-	
-	
+		}, {})
+
 	return inventoryObject
 }
 
