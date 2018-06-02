@@ -6,7 +6,7 @@
   "keywords": [
     "ssh","autocompletion","bash","zsh","cli"
   ],
-  "repository": "git@gitlab.com:guruak107/server-map.git",
+  "repository": "https://github.com/Guru107/servermap",
   "author": "Guru107 <guruak107@gmail.com>",
   "license": "MIT",
   "private": false,
