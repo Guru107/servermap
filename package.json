@@ -1,6 +1,6 @@
 {
   "name": "servermap",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple tool to ssh into servers based on your ansible inventory file",
   "main": "index.js",
   "keywords": [
