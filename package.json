@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A simple tool to ssh into servers based on your ansible inventory file",
   "main": "index.js",
+  "keywords": [
+    "ssh","autocompletion","bash","zsh","cli"
+  ],
   "repository": "git@gitlab.com:guruak107/server-map.git",
   "author": "Guru107 <guruak107@gmail.com>",
   "license": "MIT",
